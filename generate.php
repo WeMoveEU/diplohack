@@ -15,9 +15,8 @@ $votes=array ("FOR"=>1,"AGAINST"=>-1,"ABSTAIN"=>0 ,"DIDNTVOTE"=> null);
 $iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","GB","HR"];
 //$t = $r['3243-3'];
 
+$nbvotes = 0;
 foreach ($r as $t) {
-
-  $nbvotes = 0;
   $countries=array();
   $vote = array(
       "act"=>$t->act,
@@ -44,6 +43,7 @@ foreach ($r as $t) {
     fputcsv($fp, array_keys($vote));
   }
   fputcsv($fp, $vote);
+  $nbvotes++;
 }
 
 //echo json_encode (array_keys($countries));
@@ -52,4 +52,5 @@ foreach ($r as $t) {
 
 fclose($fp);
 
+echo "generated $nbvotes\n";
 
