@@ -190,21 +190,27 @@ function processQuery($sparqlRequest)
             $countryName = $binding['name']['value'];
             $countryCode = $GLOBALS['EU_STATES_COD'][$countryName];
 
+            if (!property_exists($actObj_a[$actId],"countries") )
+                $actObj_a[$actId]->countries = array();
             switch( $binding['vote']['value'] ) {
 
                 case "Voted in favour":
+                    $actObj_a[$actId]->countries[$countryCode] = 1;
                     array_push($actObj_a[$actId]->votes_FOR, $countryCode);
                     break;
 
                 case "Voted against":
+                    $actObj_a[$actId]->countries[$countryCode] = -1;
                     array_push($actObj_a[$actId]->votes_AGAINST, $countryCode);
                     break;
 
                 case "Abstained":
+                    $actObj_a[$actId]->countries[$countryCode] = 0;
                     array_push($actObj_a[$actId]->votes_ABSTAIN, $countryCode);
                     break;
 
                 case "Not participating":
+                    $actObj_a[$actId]->countries[$countryCode] = "";
                     array_push($actObj_a[$actId]->votes_DIDNTVOTE, $countryCode);
                     break;
             }
