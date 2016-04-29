@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Votes in the council</title>
+
+    <!-- Bootstrap -->
+    <link href="dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="dist/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="css/dc.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+  <div class="container theme-showcase" role="main">
+
+    <div class="jumbotron">
+      <h1>Votes in the council</h1>
+      <p></p>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">
+        <div id="policyarea"></div>
+        <div id="NOdayofweek"></div>
+      </div>
+      <div class="col-md-6">
+      <div id="month"></div>
+      <div id="against"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+      <table id="table" class="table">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>date</th>
+            <th>Policy area</th>
+            <th>title</th>
+          </tr>
+        </thead>
+      </table>
+      </div>
+    </div>
+  </div>
+
+    <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/d3.js"></script>
+    <script type="text/javascript" src="js/crossfilter.js"></script>
+    <script type="text/javascript" src="js/dc.min.js"></script>
+    <script type="text/javascript">
+
+    iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","GB","HR"];
+
+    d3.csv("data/votes.csv", function(error, data) {
+
+			var dateFormat = d3.time.format("%Y-%m-%d");
+
+			data.forEach(function(d){ 
+				d.dd = dateFormat.parse(d.date);
+        d.against=0;
+        d.abstention=0;
+        d.countries=0;
+        iso.forEach(function (c) {
+          if (d[c] == -1)
+            d.against++;
+          if (d[c] == 0)
+            d.abstention++;
+          if (d[c] != '')
+            d.countries++;
+        });
+      });
+
+      var ndx           = crossfilter(data);
+			var min = d3.time.day.offset(d3.min(data, function(d) { return d.dd;} ),-2);
+			var max = d3.time.day.offset(d3.max(data, function(d) { return d.dd;} ), 2);
+
+      var dimension  = ndx.dimension(function(d) {return d.id;});
+      var group= dimension.group().reduceSum(function(d) {return 1;});
+
+ //     var pie = drawPie("#test",ndx,dimension,group);
+      var date = drawDate();
+      var cat = drawCategory();
+      var against = drawAgainst('#against');
+      var table = drawTable("#table",ndx,dimension);
+  
+      dc.renderAll();
+
+
+      function drawCategory(){
+				var dim = ndx.dimension(function(d) { return d.policyarea; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+				graph 	= dc.rowChart('#policyarea')
+					.width(300)
+					.height(400)
+					.margins({top: 0, left: 10, right: 10, bottom: 20})
+					.group(group)
+					.dimension(dim)
+					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+					.elasticX(true)
+					.xAxis().ticks(4);
+      }
+
+      function drawDate() {
+				var creationMonth = ndx.dimension(function(d) { return d3.time.month(d.dd); });
+				var monthGroup = creationMonth.group().reduceSum(function(d) { return 1; });
+
+				var creationWeek = ndx.dimension(function (d) { 
+					var day = d.dd.getDay(); 
+					var name=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+					return day+"."+name[day]; 
+				});
+
+				var creationWeekGroup = creationWeek.group().reduceSum(function(d){return 1;});
+				
+//				var group   = creationMonth.group().reduceSum(function(d) {return 1;});
+/*				var group = {
+					all:function () {
+						var cumulate = 0;
+						var g = [];
+						_group.all().forEach(function(d,i) {
+							cumulate += d.value;
+							g.push({key:d.key,value:cumulate})
+						});
+						return g;
+					}
+				};
+*/
+				weekRow 	= dc.rowChart('#dayofweek');
+				weekRow
+					.width(300)
+					.height(200)
+					.margins({top: 0, left: 10, right: 10, bottom: 20})
+					.group(creationWeekGroup)
+					.dimension(creationWeek)
+					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+					.elasticX(true)
+					.xAxis().ticks(4);
+
+				dc.lineChart('#month')
+					.width(800)
+					.height(200)
+          .renderArea(true)
+          .margins({top: 10, right: 50, bottom: 30, left: 50})
+					.dimension(creationMonth)
+					.group(monthGroup)
+					.x(d3.time.scale().domain([min, max]))
+					.round(d3.time.week.round)
+					.elasticY(true)
+					.xUnits(d3.time.month);
+      }
+
+      function drawAgainst (dom) {
+				var dim = ndx.dimension(function(d) { return d.against+d.abstention; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+        var chart = dc.pieChart(dom)
+          .width(200)
+          .height(200)
+          .slicesCap(10)
+          .innerRadius(20)
+          .dimension(dim)
+          .group(group)
+          .legend(dc.legend());
+   
+          return chart;
+      }
+    
+      function drawTable (dom, ndx, dimension) {
+        var chart= dc.dataTable(dom)
+              .dimension(dimension)
+              .size(1000)
+              .group(function (d) { return "";})
+              .columns([
+                  function (d) {
+                      return d.id || "";
+                  },
+                  function (d) {
+                      return d.date || "";
+                  },
+                  function (d) {
+                      return d.policyarea || "";
+                  },
+                  function (d) {
+                      return d.title || "";
+                  }
+              ])
+              .sortBy(function (d) {
+                  return d.name;
+              })
+              .order(d3.ascending);
+        return chart;
+
+      }
+
+    });
+
+
+
+
+
+
+    </script>
+
+  </body>
+</html>
+

@@ -1,0 +1,30 @@
+{
+  "name": "caesar",
+  "version": "0.0.1",
+  "authors": [
+    "xavier <xavier@tttp.eu>"
+  ],
+  "description": "minimal dc+boostrap project",
+  "main": "index.html",
+  "keywords": [
+    "datavisualisation",
+    "d3",
+    "dc.js"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "~3.3.1",
+    "crossfilter": "~1.3.11",
+    "jquery": "~2.1.3",
+    "d3": "~3.5.3",
+    "dc.js": "master"
+  }
+}

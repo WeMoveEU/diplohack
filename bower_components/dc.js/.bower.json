@@ -1,0 +1,37 @@
+{
+  "name": "dcjs",
+  "main": [
+    "dc.js",
+    "dc.css"
+  ],
+  "keywords": [
+    "visualization",
+    "svg",
+    "animation",
+    "canvas",
+    "chart",
+    "dimensional",
+    "crossfilter",
+    "d3"
+  ],
+  "ignore": [
+    "*",
+    "!dc.*",
+    "!LICENSE",
+    "!README.md"
+  ],
+  "dependencies": {
+    "d3": "3.x",
+    "crossfilter": "1.x"
+  },
+  "homepage": "https://github.com/NickQiZhu/dc.js",
+  "_release": "93eb3d14dc",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "93eb3d14dcf60d7785461bfcfec8eebf81659284"
+  },
+  "_source": "https://github.com/NickQiZhu/dc.js.git",
+  "_target": "master",
+  "_originalSource": "dc.js"
+}
