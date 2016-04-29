@@ -19,7 +19,7 @@ $nbvotes = 0;
 foreach ($r as $t) {
   $countries=array();
   $vote = array(
-      "act"=>$t->act,
+      "id"=>$t->id,
       "date"=>substr($t->actDate,0,10),
       "policyarea"=>$t->policyarea,
       "title"=>$t->title,
