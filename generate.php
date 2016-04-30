@@ -17,13 +17,19 @@ $iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","I
 
 $nbvotes = 0;
 foreach ($r as $t) {
-  $countries=array();
-  $vote = array(
+  $t->date=substr($t->actDate,0,10);
+  $bl =array("votes_FOR","votes_AGAINST","votes_ABSTAIN","votes_DIDNTVOTE","actDate");
+  foreach ($bl as $i)
+    unset($t->$i);
+  $vote = (array) $t;
+  
+/*  $vote = array(
       "id"=>$t->id,
       "date"=>substr($t->actDate,0,10),
       "policyarea"=>$t->policyarea,
       "title"=>$t->title,
   );
+ */
 
   $nbcountries=0;
   foreach ($iso as $c) {
@@ -32,11 +38,12 @@ foreach ($r as $t) {
     else 
       $vote[$c]="";
   }
-
+  unset($vote["countries"]);
   //  ksort($countries);
 
   if ($nbvotes==0) {
     fputcsv($fp, array_keys($vote));
+//    print_r(array_keys($vote)); die ("aaa");
   }
   fputcsv($fp, $vote);
   $nbvotes++;

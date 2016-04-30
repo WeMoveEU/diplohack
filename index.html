@@ -17,6 +17,9 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+<style>
+.dc-chart g.row text {fill:black;}
+</style>
   </head>
   <body>
   <div class="container theme-showcase" role="main">
@@ -29,11 +32,17 @@
     <div class="row">
       <div class="col-md-4">
         <div id="policyarea"></div>
-        <div id="NOdayofweek"></div>
       </div>
       <div class="col-md-6">
+    <div class="row">
       <div id="month"></div>
+        <div id="dayofweek"></div>
+      <div id="actype"></div>
+      </div>
+    <div class="row">
       <div id="against"></div>
+<div id="countries"></div>
+      </div>
       </div>
     </div>
     <div class="row">
@@ -61,22 +70,41 @@
     <script type="text/javascript">
 
     iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","GB","HR"];
+    weight = {"AT":10,"BE":12,"BG":10,"CY":4,"CZ":12,"DE":29,"DK":7,"EE":4,"GR":12,"ES":27,"FI":7,"FR":29,"HU":12,"IE":7,"IT":29,"LT":4,"LU":4,"LV":7,"MT":3,"NL":13,"PL":27,"PT":12,"RO":14,"SE":10,"SI":4,"SK":7,"GB":29,"HR":7};
+/*
+The 352 votes are distributed as follows:
 
+    France, Germany, Italy, United Kingdom: 29 votes each
+    Spain, Poland: 27 votes each
+    Romania: 14 votes
+    Netherlands: 13 votes
+    Belgium, Czech Republic, Greece, Hungary, Portugal: 12 votes each
+    Austria, Bulgaria, Sweden: 10 votes each
+    Croatia, Denmark, Ireland, Lithuania, Slovakia, Finland: 7 votes each
+    Cyprus, Estonia, Latvia, Luxembourg, Slovenia: 4 votes each
+    Malta: 3 votes
+*/
     d3.csv("data/votes.csv", function(error, data) {
 
 			var dateFormat = d3.time.format("%Y-%m-%d");
 
 			data.forEach(function(d){ 
 				d.dd = dateFormat.parse(d.date);
+        if (d.dd == null) 
+          console.log(d);
         d.against=0;
         d.abstention=0;
         d.countries=0;
         iso.forEach(function (c) {
-          if (d[c] == -1)
+          if (d[c] === '')
+           d[c] = null;
+          else
+            d[c] = +d[c];
+          if (d[c] === -1)
             d.against++;
           if (d[c] == 0)
             d.abstention++;
-          if (d[c] != '')
+          if (d[c] !== '')
             d.countries++;
         });
       });
@@ -88,14 +116,81 @@
       var dimension  = ndx.dimension(function(d) {return d.id;});
       var group= dimension.group().reduceSum(function(d) {return 1;});
 
- //     var pie = drawPie("#test",ndx,dimension,group);
       var date = drawDate();
       var cat = drawCategory();
+      var country = drawCountry();
+      drawActType('#acttype');
       var against = drawAgainst('#against');
       var table = drawTable("#table",ndx,dimension);
   
       dc.renderAll();
 
+
+      function drawCountry () {
+				var dim = ndx.dimension(function(d) { return d.policyarea; });
+        var group = pivot(dim,iso)
+        var chart = dc.bubbleChart('#countries')
+					.width(500)
+					.height(200)
+					.margins({top: 20, left: 40, right: 20, bottom: 20})
+					.group(group)
+					.dimension(dim)
+          .colorAccessor(function (p) {
+            return p.value.votes;
+          })
+          .keyAccessor(function (p) {
+            return p.value.abstention;
+          })
+          .valueAccessor(function (p) {
+            return p.value.against;
+          })
+          .radiusValueAccessor(function (p) {
+            return weight[p.key];
+          })
+          .sortBubbleSize(true)
+//          .colorCalculator (function (d,i) {return "#3695d8";})
+          .x(d3.scale.linear().domain([0, 1000]))
+          .y(d3.scale.linear().domain([0, 1000]))
+          .r(d3.scale.linear().domain([0, 1000]))
+					.elasticX(true)
+					.elasticY(true);
+
+        function convert (p,v,step) {
+           iso.forEach(function(c) {
+             if (v[c] !== null) p[c].vote = p[c].vote + step;
+             if (v[c] === -1) p[c].against =  p[c].against + step;
+             if (v[c] === 0) p[c].abstention = p[c].abstention + step;
+           });
+        }
+
+        function pivot(dim, cols) {
+            var _groupAll = dim.groupAll().reduce(
+                function(p, v) { // add
+                    convert(p, v,1);
+                    return p;
+                },
+                function(p, v) { // remove
+                    convert(p, v,-1);
+                    return p;
+                },
+                function() { // init
+                    var p = {};
+                    cols.forEach(function(c) {
+                        p[c] = {vote: 0, against:0, abstention:0};
+                    });
+                    return p;
+                });
+            return {
+                top: function () {
+                    return d3.map(_groupAll.value()).entries();
+                  },
+                all: function() {
+                    // or _.pairs, anything to turn the object into an array
+                    return d3.map(_groupAll.value()).entries();
+                }
+            };
+}
+      }
 
       function drawCategory(){
 				var dim = ndx.dimension(function(d) { return d.policyarea; });
@@ -106,6 +201,7 @@
 					.margins({top: 0, left: 10, right: 10, bottom: 20})
 					.group(group)
 					.dimension(dim)
+          .gap(1)
 					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
 					.elasticX(true)
 					.xAxis().ticks(4);
@@ -138,13 +234,14 @@
 */
 				weekRow 	= dc.rowChart('#dayofweek');
 				weekRow
-					.width(300)
+					.width(200)
 					.height(200)
 					.margins({top: 0, left: 10, right: 10, bottom: 20})
 					.group(creationWeekGroup)
 					.dimension(creationWeek)
-					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+          .ordinalColors(['#3182bd', '#6baed6', '#9ecae1', '#c6dbef', '#dadaeb'])
 					.elasticX(true)
+          .label(function (d) {return d.key.split('.')[1];})
 					.xAxis().ticks(4);
 
 				dc.lineChart('#month')
@@ -158,6 +255,20 @@
 					.round(d3.time.week.round)
 					.elasticY(true)
 					.xUnits(d3.time.month);
+      }
+
+      function drawActType(dom) {
+				var dim = ndx.dimension(function(d) { return d.actType; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+        var chart = dc.pieChart(dom)
+          .width(150)
+          .height(150)
+          .slicesCap(10)
+          .innerRadius(20)
+          .dimension(dim)
+          .group(group);
+
+
       }
 
       function drawAgainst (dom) {
