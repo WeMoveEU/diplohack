@@ -25,7 +25,8 @@
   <div class="container theme-showcase" role="main">
 
     <div class="jumbotron">
-      <h1>Votes in the council</h1>
+      <h3>Votes in the council</h3>
+      <p class="dc-data-count"> </p>
       <p></p>
     </div>
 
@@ -37,7 +38,8 @@
     <div class="row">
       <div id="month"></div>
         <div id="dayofweek"></div>
-      <div id="actype"></div>
+      <div id="acttype"></div>
+      <div id="votingprocedure"></div>
       </div>
     <div class="row">
       <div id="against"></div>
@@ -109,17 +111,25 @@ The 352 votes are distributed as follows:
         });
       });
 
-      var ndx           = crossfilter(data);
+      var ndx = crossfilter(data);
 			var min = d3.time.day.offset(d3.min(data, function(d) { return d.dd;} ),-2);
 			var max = d3.time.day.offset(d3.max(data, function(d) { return d.dd;} ), 2);
 
       var dimension  = ndx.dimension(function(d) {return d.id;});
       var group= dimension.group().reduceSum(function(d) {return 1;});
 
+      dc.dataCount('.dc-data-count').dimension(ndx).group(ndx.groupAll())
+      .html({
+        some: '<strong>%filter-count</strong> selected out of <strong>%total-count</strong> votes' +
+        ' | <a href=\'javascript:dc.filterAll(); dc.renderAll();\'\'>Reset All</a>',
+        all: 'All %total-count votes selected. Please click on the graph to apply filters.'
+      });
+
       var date = drawDate();
       var cat = drawCategory();
       var country = drawCountry();
       drawActType('#acttype');
+      drawProcedure('#votingprocedure');
       var against = drawAgainst('#against');
       var table = drawTable("#table",ndx,dimension);
   
@@ -136,7 +146,7 @@ The 352 votes are distributed as follows:
 					.group(group)
 					.dimension(dim)
           .colorAccessor(function (p) {
-            return p.value.votes;
+            return p.value.vote;
           })
           .keyAccessor(function (p) {
             return p.value.abstention;
@@ -151,9 +161,19 @@ The 352 votes are distributed as follows:
 //          .colorCalculator (function (d,i) {return "#3695d8";})
           .x(d3.scale.linear().domain([0, 1000]))
           .y(d3.scale.linear().domain([0, 1000]))
-          .r(d3.scale.linear().domain([0, 1000]))
+          .r(d3.scale.linear().domain([0, 100]))
 					.elasticX(true)
-					.elasticY(true);
+          .xAxisLabel('Abstensions')
+          .yAxisLabel('Against')
+					.elasticY(true)
+          .title(function (p) {
+            return [
+                p.key,
+                'Abstension: ' + p.value.abstention,
+                'Against: ' + p.value.against,
+                'Total votes: ' + p.value.vote
+            ].join('\n');
+         });
 
         function convert (p,v,step) {
            iso.forEach(function(c) {
@@ -190,6 +210,21 @@ The 352 votes are distributed as follows:
                 }
             };
 }
+      }
+
+      function drawConfiguration(dom){
+				var dim = ndx.dimension(function(d) { return d.configuration; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+				graph 	= dc.rowChart(dom)
+					.width(300)
+					.height(400)
+					.margins({top: 0, left: 10, right: 10, bottom: 20})
+					.group(group)
+					.dimension(dim)
+          .gap(1)
+					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+					.elasticX(true)
+					.xAxis().ticks(4);
       }
 
       function drawCategory(){
@@ -257,8 +292,22 @@ The 352 votes are distributed as follows:
 					.xUnits(d3.time.month);
       }
 
+      function drawProcedure(dom) {
+				var dim = ndx.dimension(function(d) { return d.votingprocedure; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+        var chart = dc.pieChart(dom)
+          .width(150)
+          .height(150)
+          .slicesCap(5)
+          .innerRadius(20)
+          .dimension(dim)
+          .group(group);
+
+
+      }
+
       function drawActType(dom) {
-				var dim = ndx.dimension(function(d) { return d.actType; });
+				var dim = ndx.dimension(function(d) { return d.acttype; });
 				var group = dim.group().reduceSum(function(d) { return 1; });
         var chart = dc.pieChart(dom)
           .width(150)
@@ -277,12 +326,10 @@ The 352 votes are distributed as follows:
         var chart = dc.pieChart(dom)
           .width(200)
           .height(200)
-          .slicesCap(10)
+          .slicesCap(3)
           .innerRadius(20)
           .dimension(dim)
-          .group(group)
-          .legend(dc.legend());
-   
+          .group(group);
           return chart;
       }
     

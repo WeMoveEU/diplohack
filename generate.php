@@ -22,6 +22,7 @@ foreach ($r as $t) {
   foreach ($bl as $i)
     unset($t->$i);
   $vote = (array) $t;
+  ksort($vote);
   
 /*  $vote = array(
       "id"=>$t->id,
