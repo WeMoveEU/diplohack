@@ -18,6 +18,7 @@ $iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","I
 $nbvotes = 0;
 foreach ($r as $t) {
   $t->date=substr($t->actDate,0,10);
+  if (! property_exists ($t,"docnrinterinst")) $t->docnrinterinst="";
   $bl =array("votes_FOR","votes_AGAINST","votes_ABSTAIN","votes_DIDNTVOTE","actDate");
   foreach ($bl as $i)
     unset($t->$i);

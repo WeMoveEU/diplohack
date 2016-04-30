@@ -25,24 +25,36 @@
   <div class="container theme-showcase" role="main">
 
     <div class="jumbotron">
-      <h3>Votes in the council</h3>
+      <h2>Votes in the council</h2>
       <p class="dc-data-count"> </p>
       <p></p>
     </div>
 
     <div class="row">
       <div class="col-md-4">
+        <h3>Policy areas</h3>
         <div id="policyarea"></div>
-      </div>
+    </div>
       <div class="col-md-6">
     <div class="row">
       <div id="month"></div>
+    <div class="row">
+      <div class="col-md-3">
+        <h3>Day</h3>
+
         <div id="dayofweek"></div>
+      </div><div class="col-md-3">
+        <h3>Type</h3>
       <div id="acttype"></div>
+      </div><div class="col-md-3">
+        <h3>Procedure</h3>
       <div id="votingprocedure"></div>
+      </div><div class="col-md-3">
+        <h3>Contested</h3>
+      <div id="contested"></div>
+    </div>
       </div>
     <div class="row">
-      <div id="against"></div>
 <div id="countries"></div>
       </div>
       </div>
@@ -130,7 +142,7 @@ The 352 votes are distributed as follows:
       var country = drawCountry();
       drawActType('#acttype');
       drawProcedure('#votingprocedure');
-      var against = drawAgainst('#against');
+      drawContested('#contested');
       var table = drawTable("#table",ndx,dimension);
   
       dc.renderAll();
@@ -141,8 +153,8 @@ The 352 votes are distributed as follows:
         var group = pivot(dim,iso)
         var chart = dc.bubbleChart('#countries')
 					.width(500)
-					.height(200)
-					.margins({top: 20, left: 40, right: 20, bottom: 20})
+					.height(230)
+					.margins({top: 20, left: 40, right: 20, bottom: 40})
 					.group(group)
 					.dimension(dim)
           .colorAccessor(function (p) {
@@ -269,8 +281,8 @@ The 352 votes are distributed as follows:
 */
 				weekRow 	= dc.rowChart('#dayofweek');
 				weekRow
-					.width(200)
-					.height(200)
+					.width(150)
+					.height(150)
 					.margins({top: 0, left: 10, right: 10, bottom: 20})
 					.group(creationWeekGroup)
 					.dimension(creationWeek)
@@ -320,12 +332,12 @@ The 352 votes are distributed as follows:
 
       }
 
-      function drawAgainst (dom) {
+      function drawContested (dom) {
 				var dim = ndx.dimension(function(d) { return d.against+d.abstention; });
 				var group = dim.group().reduceSum(function(d) { return 1; });
         var chart = dc.pieChart(dom)
-          .width(200)
-          .height(200)
+          .width(150)
+          .height(150)
           .slicesCap(3)
           .innerRadius(20)
           .dimension(dim)
