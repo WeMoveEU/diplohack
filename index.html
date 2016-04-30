@@ -19,6 +19,8 @@
     <![endif]-->
 <style>
 .dc-chart g.row text {fill:black;}
+.dc-chart .pie-slice {fill:black;}
+
 </style>
   </head>
   <body>
@@ -47,8 +49,11 @@
         <h3>Type</h3>
       <div id="acttype"></div>
       </div><div class="col-md-3">
-        <h3>Procedure</h3>
+        <h3>Council</h3>
+              <div id="configuration"></div>
+        <!--        <h3>Procedure</h3> 
       <div id="votingprocedure"></div>
+-->
       </div><div class="col-md-3">
         <h3>Contested</h3>
       <div id="contested"></div>
@@ -76,6 +81,8 @@
   </div>
 
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    
+ 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="dist/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/d3.js"></script>
@@ -85,6 +92,23 @@
 
     iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","GB","HR"];
     weight = {"AT":10,"BE":12,"BG":10,"CY":4,"CZ":12,"DE":29,"DK":7,"EE":4,"GR":12,"ES":27,"FI":7,"FR":29,"HU":12,"IE":7,"IT":29,"LT":4,"LU":4,"LV":7,"MT":3,"NL":13,"PL":27,"PT":12,"RO":14,"SE":10,"SI":4,"SK":7,"GB":29,"HR":7};
+
+    var presidency = [{"start":"2010-01-01", iso:"ES"},
+      {"start":"2010-07-01", iso:"BE"},
+      {"start":"2011-01-01", iso:"HU"},
+      {"start":"2011-07-01", iso:"PL"},
+      {"start":"2012-01-01", iso:"DK"},
+      {"start":"2012-07-01", iso:"CY"},
+      {"start":"2013-01-01", iso:"IE"},
+      {"start":"2013-07-01", iso:"LT"},
+      {"start":"2014-01-01", iso:"GR"},
+      {"start":"2014-07-01", iso:"IT"},
+      {"start":"2015-01-01", iso:"LV"},
+      {"start":"2015-07-01", iso:"LU"},
+      {"start":"2016-01-01", iso:"NL"}
+    ];
+
+
 /*
 The 352 votes are distributed as follows:
 
@@ -139,6 +163,7 @@ The 352 votes are distributed as follows:
 
       var date = drawDate();
       var cat = drawCategory();
+      var cat = drawConfiguration("#configuration");
       var country = drawCountry();
       drawActType('#acttype');
       drawProcedure('#votingprocedure');
@@ -152,8 +177,8 @@ The 352 votes are distributed as follows:
 				var dim = ndx.dimension(function(d) { return d.policyarea; });
         var group = pivot(dim,iso)
         var chart = dc.bubbleChart('#countries')
-					.width(500)
-					.height(230)
+					.width(600)
+					.height(430)
 					.margins({top: 20, left: 40, right: 20, bottom: 40})
 					.group(group)
 					.dimension(dim)
@@ -228,8 +253,8 @@ The 352 votes are distributed as follows:
 				var dim = ndx.dimension(function(d) { return d.configuration; });
 				var group = dim.group().reduceSum(function(d) { return 1; });
 				graph 	= dc.rowChart(dom)
-					.width(300)
-					.height(400)
+					.width(150)
+					.height(150)
 					.margins({top: 0, left: 10, right: 10, bottom: 20})
 					.group(group)
 					.dimension(dim)
@@ -341,6 +366,11 @@ The 352 votes are distributed as follows:
           .slicesCap(3)
           .innerRadius(20)
           .dimension(dim)
+          .label(function(d){
+              console.log(d);
+            if (d.key==0) return "Unanimity";
+            if (d.key== "others") return "More";
+          })
           .group(group);
           return chart;
       }
