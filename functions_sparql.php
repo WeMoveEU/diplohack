@@ -1,5 +1,9 @@
 <?php
 
+// *************************
+// The content of this file has been developed by the ConsiliumVote.eu project team.
+// Please inform where you use the functions contained into this file on info@consiliumvote.eu
+// **************************
 
 // ***
 function querySparqlServerSearch($dateFrom, $dateTo, $area, $conf, $form, $rule, $docNr, $interNr, $string)

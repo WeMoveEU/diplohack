@@ -20,6 +20,7 @@
 <style>
 .dc-chart g.row text {fill:black;}
 .dc-chart .pie-slice {fill:black;}
+.input-group {position:absolute;}
 
 </style>
   </head>
@@ -27,7 +28,11 @@
   <div class="container theme-showcase" role="main">
 
     <div class="jumbotron">
-      <h2>Votes in the council</h2>
+      <h2>Votes in the council
+				<span class="input-group">
+						<input type="text" id="search-input" class="form-control input-lg" placeholder="title of the document">
+				</span>
+      </h2>
       <p class="dc-data-count"> </p>
       <p></p>
     </div>
@@ -36,8 +41,10 @@
       <div class="col-md-4">
         <h3>Policy areas</h3>
         <div id="policyarea"></div>
+        <h3>Presidency</h3>
+        <div id="presidency"></div>
     </div>
-      <div class="col-md-6">
+      <div class="col-md-8">
     <div class="row">
       <div id="month"></div>
     <div class="row">
@@ -89,6 +96,7 @@
     <script type="text/javascript" src="js/crossfilter.js"></script>
     <script type="text/javascript" src="js/dc.min.js"></script>
     <script type="text/javascript">
+var wall = null;
 
     iso = ["AT","BE","BG","CY","CZ","DE","DK","EE","GR","ES","FI","FR","HU","IE","IT","LT","LU","LV","MT","NL","PL","PT","RO","SE","SI","SK","GB","HR"];
     weight = {"AT":10,"BE":12,"BG":10,"CY":4,"CZ":12,"DE":29,"DK":7,"EE":4,"GR":12,"ES":27,"FI":7,"FR":29,"HU":12,"IE":7,"IT":29,"LT":4,"LU":4,"LV":7,"MT":3,"NL":13,"PL":27,"PT":12,"RO":14,"SE":10,"SI":4,"SK":7,"GB":29,"HR":7};
@@ -126,14 +134,26 @@ The 352 votes are distributed as follows:
 
 			var dateFormat = d3.time.format("%Y-%m-%d");
 
+      presidency.forEach (function(p){
+        p.start=dateFormat.parse(p.start);
+      });
 			data.forEach(function(d){ 
 				d.dd = dateFormat.parse(d.date);
+        if (d.dd.getMonth() <= 5)
+          start = dateFormat.parse( d.dd.getFullYear()+"-01-01");
+        else 
+          start = dateFormat.parse( d.dd.getFullYear()+"-07-01");
+        presidency.forEach(function(p){
+          if (p.start.getTime() == start.getTime())
+            d.presidency = p.iso;
+        });
         if (d.dd == null) 
           console.log(d);
         d.against=0;
         d.abstention=0;
         d.countries=0;
         iso.forEach(function (c) {
+
           if (d[c] === '')
            d[c] = null;
           else
@@ -151,7 +171,10 @@ The 352 votes are distributed as follows:
 			var min = d3.time.day.offset(d3.min(data, function(d) { return d.dd;} ),-2);
 			var max = d3.time.day.offset(d3.max(data, function(d) { return d.dd;} ), 2);
 
-      var dimension  = ndx.dimension(function(d) {return d.id;});
+//      var dimension  = ndx.dimension(function(d) {return d.id;});
+	    var dimension = ndx.dimension(function(d) {
+			  return d.id+d.title.toLowerCase();
+			});
       var group= dimension.group().reduceSum(function(d) {return 1;});
 
       dc.dataCount('.dc-data-count').dimension(ndx).group(ndx.groupAll())
@@ -165,13 +188,34 @@ The 352 votes are distributed as follows:
       var cat = drawCategory();
       var cat = drawConfiguration("#configuration");
       var country = drawCountry();
+      drawPresidency('#presidency');
+      drawSearch('#search-input');
       drawActType('#acttype');
       drawProcedure('#votingprocedure');
       drawContested('#contested');
-      var table = drawTable("#table",ndx,dimension);
+      var wall = drawTable("#table",ndx,dimension);
   
       dc.renderAll();
 
+      function drawSearch(dom){
+	      jQuery(function($) {
+          $(dom).keyup (function () {
+            var s = $(this ).val().toLowerCase();
+            wall.dimension().filter(function (d) { 
+              return d.indexOf (s) !== -1;} );
+            $(".resetall").attr("disabled",true);
+            dc.redrawAll();
+          });
+        });
+      }
+
+        function convert (p,v,step) {
+           iso.forEach(function(c) {
+             if (v[c] !== null) p[c].vote = p[c].vote + step;
+             if (v[c] === -1) p[c].against =  p[c].against + step;
+             if (v[c] === 0) p[c].abstention = p[c].abstention + step;
+           });
+        }
 
       function drawCountry () {
 				var dim = ndx.dimension(function(d) { return d.policyarea; });
@@ -212,13 +256,6 @@ The 352 votes are distributed as follows:
             ].join('\n');
          });
 
-        function convert (p,v,step) {
-           iso.forEach(function(c) {
-             if (v[c] !== null) p[c].vote = p[c].vote + step;
-             if (v[c] === -1) p[c].against =  p[c].against + step;
-             if (v[c] === 0) p[c].abstention = p[c].abstention + step;
-           });
-        }
 
         function pivot(dim, cols) {
             var _groupAll = dim.groupAll().reduce(
@@ -247,6 +284,44 @@ The 352 votes are distributed as follows:
                 }
             };
 }
+      }
+
+      function drawPresidency(dom){
+        function convert (p,v,step) {
+           iso.forEach(function(c) {
+             if (v[c] !== null) p.vote = p.vote + step;
+             if (v[c] === -1) p.against =  p.against + step;
+             if (v[c] === 0) p.abstention = p.abstention + step;
+           });
+        }
+
+				var dim = ndx.dimension(function(d) { return d.presidency; });
+        var group = dim.group().reduceSum(function(d) { return 1; });
+        var group1=dim.group().reduce(
+                function(p, v) { // add
+                    convert(p, v,1);
+                    return p;
+                },
+                function(p, v) { // remove
+                    convert(p, v,-1);
+                    return p;
+                },
+                function() { // init
+                   return {vote: 0, against:0, abstention:0};
+                });
+				graph 	= dc.rowChart(dom)
+					.width(150)
+					.height(200)
+					.margins({top: 0, left: 10, right: 10, bottom: 20})
+					.group(group)
+					.dimension(dim)
+          .gap(1)
+//          .colorAccessor(function (d) {return d.value.against+d.value.abstention;})
+//          .valueAccessor(function (p) {return p.value.vote;})
+//          .label(function(d){var o=d.value.against+d.value.abstention;return d.key + ":"+o;})
+					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+					.elasticX(true)
+					.xAxis().ticks(4);
       }
 
       function drawConfiguration(dom){
@@ -367,9 +442,13 @@ The 352 votes are distributed as follows:
           .innerRadius(20)
           .dimension(dim)
           .label(function(d){
-              console.log(d);
             if (d.key==0) return "Unanimity";
-            if (d.key== "others") return "More";
+            if (d.key== "Others") return "More";
+          })
+          .title(function(d){
+            if (d.key==0) return "Unanimity: "+d.value;
+            if (d.key== "Others") return "More:"+d.value ;
+            return d.key + " countries:" + d.value;
           })
           .group(group);
           return chart;
