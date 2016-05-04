@@ -226,6 +226,11 @@ The 352 votes are distributed as follows:
 					.margins({top: 20, left: 40, right: 20, bottom: 40})
 					.group(group)
 					.dimension(dim)
+          .on('renderlet', function(chart, filter){
+            chart.svg().select(".chart-body").attr("clip-path",null);
+          })
+          .yAxisPadding(1)
+          .xAxisPadding(1)
           .colorAccessor(function (p) {
             return p.value.vote;
           })
