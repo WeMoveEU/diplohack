@@ -130,15 +130,20 @@ The 352 votes are distributed as follows:
     Cyprus, Estonia, Latvia, Luxembourg, Slovenia: 4 votes each
     Malta: 3 votes
 */
-    d3.csv("data/votes.csv", function(error, data) {
+    d3.csv("data/complete.csv", function(error, data) {
 
 			var dateFormat = d3.time.format("%Y-%m-%d");
 
       presidency.forEach (function(p){
         p.start=dateFormat.parse(p.start);
       });
-			data.forEach(function(d){ 
+			data.forEach(function(d){
 				d.dd = dateFormat.parse(d.date);
+//				d.ep_date = dateFormat.parse(d.ep_date);
+//				d.issue_date = dateFormat.parse(d.issue_date);
+        if (!d.dd)
+          console.log(d);
+
         if (d.dd.getMonth() <= 5)
           start = dateFormat.parse( d.dd.getFullYear()+"-01-01");
         else 
