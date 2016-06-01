@@ -43,6 +43,10 @@
         <div id="policyarea"></div>
         <h3>Presidency</h3>
         <div id="presidency"></div>
+        <div class="clearfix" style="clear:both">
+        <h3>Results</h3>
+        <div id="vote"></div>
+      </div>
     </div>
       <div class="col-md-8">
     <div class="row">
@@ -190,6 +194,7 @@ The 352 votes are distributed as follows:
       });
 
       var date = drawDate();
+      var date = drawVote();
       var cat = drawCategory();
       var cat = drawConfiguration("#configuration");
       var country = drawCountry();
@@ -349,6 +354,21 @@ The 352 votes are distributed as follows:
 					.xAxis().ticks(4);
       }
 
+      function drawVote(){
+				var dim = ndx.dimension(function(d) { return d.vote; });
+				var group = dim.group().reduceSum(function(d) { return 1; });
+				graph 	= dc.rowChart('#vote')
+					.width(300)
+					.height(120)
+					.margins({top: 0, left: 10, right: 10, bottom: 20})
+					.group(group)
+					.dimension(dim)
+          .gap(1)
+					.ordinalColors(["#d95f02","#1b9e77","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d"])
+					.elasticX(true)
+					.xAxis().ticks(4);
+      }
+
       function drawCategory(){
 				var dim = ndx.dimension(function(d) { return d.policyarea; });
 				var group = dim.group().reduceSum(function(d) { return 1; });
@@ -481,7 +501,10 @@ The 352 votes are distributed as follows:
                   },
                   function (d) {
                       return d.title || "";
-                  }
+                  },
+                  function (d) {
+                      return d.ep_amendment || "";
+                  },
               ])
               .sortBy(function (d) {
                   return d.name;
